@@ -4,7 +4,9 @@ import logging
 from aiogram import Dispatcher, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
-
+from apscheduler.jobstores.redis import RedisJobStore
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler_di import ContextSchedulerDecorator
 
 from prank_bot.bot_commands import force_reset_all_commands, set_restart_command
 from prank_bot.config import load_config
@@ -69,6 +71,18 @@ async def main():
     bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
+    job_stores = {
+        "default": RedisJobStore(
+            jobs_key="dispatched_trips_jobs", run_times_key="dispatched_trips_running",
+            # параметры host и port необязательны, для примера показано как передавать параметры подключения
+            # host="localhost", port=6379
+            # , password=config.tg_bot.redis_password
+            host="redis_cache", port=6379, password=config.tg_bot.redis_password
+        )
+    }
+
+    scheduler = ContextSchedulerDecorator(AsyncIOScheduler(jobstores=job_stores))
+
     bot['config'] = config
 
     register_all_filters(dp)
@@ -81,11 +95,13 @@ async def main():
 
     # start
     try:
+        scheduler.start()
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
         await bot.session.close()
+        scheduler.shutdown()
 
 
 if __name__ == '__main__':
