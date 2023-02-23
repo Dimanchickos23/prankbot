@@ -1,16 +1,19 @@
 import sqlite3
 from datetime import datetime
 
+from aiogram import Bot
 
 database = sqlite3.connect("/Users/dmitryklimenko/PycharmProjects/prankbot/prank_bot/db_api/db.sqlite")
 cursor = database.cursor()
 
-#admin_func
+
+# admin_func
 def get_all_bot_users():
     users = cursor.execute("SELECT id FROM Users").fetchall()
     return users
 
-#admin_func
+
+# admin_func
 def delete_no_active_user(user_id):
     cursor.execute("DELETE FROM Users WHERE id=?", (user_id,))
     database.commit()
@@ -87,7 +90,8 @@ def add_user(message):
     else:
         pass
 
-#new_db_funcs
+
+# new_db_funcs
 def add_prank(prank_audio, name, title, category):
     cursor.execute("SELECT prank_audio FROM all_pranks_beta_1 WHERE name=?", (name,))
     prank = cursor.fetchone()
@@ -122,6 +126,7 @@ def prank_ids_in_category(category) -> list[str]:
     cursor.execute("SELECT DISTINCT prank_id FROM all_pranks_beta_1 WHERE category=?", (category,))
     prank_ids = cursor.fetchall()
     return prank_ids
+
 
 def add_ref_user(message, ref):
     cursor.execute("SELECT id FROM Users WHERE id=?", (message.chat.id,))
@@ -229,30 +234,32 @@ def check_take_user_prank_money(user_id):
 def get_take_prank_money(user_id):
     vip_check = get_vip_status(user_id)
     user_balance = get_user_balance(user_id)
-    if vip_check == False:
-        balance = int(user_balance) - int(25)
+    if not vip_check:
+        balance = int(user_balance) - int(30)
         cursor.execute("UPDATE Users SET balance=? WHERE id=?", (balance, user_id,))
-
-    else:
-        price = get_user_vip_procent(25)
-        balance = float(user_balance) - float(price)
-        cursor.execute("UPDATE Users SET balance=? WHERE id=?", (float(balance), user_id,))
         database.commit()
 
 
-def get_user_vip_procent(price):
-    first_price = price
-    price_procent = 70
-    result_price = float(first_price) / 100 * float(price_procent)
-    return result_price
+# def get_user_vip_procent(price):
+#     first_price = price
+#     price_procent = 70
+#     result_price = float(first_price) / 100 * float(price_procent)
+#     return result_price
 
 
 def get_prem_(user_id):
     balance = get_user_balance(user_id)
-    balance -= int(299)
+    balance -= int(250)
     cursor.execute("UPDATE Users SET balance=? WHERE id=?", (balance, user_id,))
     cursor.execute("UPDATE Users SET vip=? WHERE id=?", ('YES', user_id,))
     database.commit()
+
+
+async def remove_prem(user_id):
+    cursor.execute("UPDATE Users SET vip=? WHERE id=?", ('NO', user_id,))
+    database.commit()
+    bot = Bot.get_current()
+    await bot.send_message(user_id, "У вас закончилась премиум подписка.")
 
 
 def add_user_order_prank(user_id, prank_title, result_audio, user_numb):

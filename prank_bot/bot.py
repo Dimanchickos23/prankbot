@@ -23,6 +23,9 @@ from prank_bot.handlers.user.prank_order import register_prank_order
 from prank_bot.handlers.user.premium_sub import register_premium_sub
 from prank_bot.handlers.user.start_menu import register_start_menu
 import sentry_sdk
+
+from prank_bot.middlewares.scheduler import SchedulerMiddleware
+
 sentry_sdk.init(
     dsn="https://87544813cc664aa297084b1b8910fd37@o4504680945025024.ingest.sentry.io/4504680950464512",
 
@@ -72,18 +75,20 @@ async def main():
     dp = Dispatcher(bot, storage=storage)
 
     job_stores = {
-        "default": RedisJobStore(
+        "default": RedisJobStore(db=2,
             jobs_key="dispatched_trips_jobs", run_times_key="dispatched_trips_running",
             # параметры host и port необязательны, для примера показано как передавать параметры подключения
             # host="localhost", port=6379
             # , password=config.tg_bot.redis_password
-            host="redis_cache", port=6379, password=config.tg_bot.redis_password
+            # host="redis_cache", port=6379, password=config.tg_bot.redis_password
         )
     }
 
-    scheduler = ContextSchedulerDecorator(AsyncIOScheduler(jobstores=job_stores))
+    scheduler = AsyncIOScheduler(jobstores=job_stores)
 
     bot['config'] = config
+
+    dp.setup_middleware(SchedulerMiddleware(scheduler))
 
     register_all_filters(dp)
 

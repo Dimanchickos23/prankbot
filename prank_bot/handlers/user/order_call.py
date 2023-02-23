@@ -5,7 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Regexp
 from aiogram.types import CallbackQuery, Message
 
-from prank_bot.db_api.db import add_numb_info, get_vip_status, get_user_vip_procent, add_user_numb_prank, \
+from prank_bot.db_api.db import add_numb_info, get_vip_status,add_user_numb_prank, \
     get_user_prank_id, \
     get_user_prank_title, get_user_prank_numb, check_take_user_prank_money, get_prank_text_info, get_prank_audio_info
 from prank_bot.keyboards import retrun_markup, orerder_prank_user_markup, prank_categories_kb, orerder_prank_1_markup
@@ -58,16 +58,16 @@ async def call_user_order_confirm(message: Message, state=FSMContext):
     # "📲 Звонок поступит с номера: <code>79210191999</code>\n\n"
     await state.finish()
     status = get_vip_status(chat_id)
-    user_pay = get_user_vip_procent(25)
+    # user_pay = get_user_vip_procent(25)
     if status != False:
         add_user_numb_prank(message)
         user_prank_id = get_user_prank_id(chat_id)
-        prank_title = get_user_prank_title(user_prank_id)
+        prank_title = get_prank_text_info(user_prank_id)
         await bot.send_message(chat_id, "Название пранка: \n"
                                         f"<code>{prank_title}</code>\n"
                                         "🇷🇺 Номер получателя: \n"
                                         f"<code>{message.text}</code>\n"
-                                        f"💸 С Вашего баланса будет списано: <code>{user_pay}</code> RUB\n\n"
+                                        f"💸 С Вашего баланса будет списано: <code>0</code> RUB\n\n"
                                         "<strong>Отправить?</strong>\n"
                                         "<strong>❗️ВАЖНО❗</strong>️При соединении с <strong>автоответчиком, "
                                         "оператор</strong> всё равно <strong>списывает с нас оплату</strong> "
